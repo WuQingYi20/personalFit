@@ -1,7 +1,9 @@
 // 获取表单和输入字段
 const form = document.getElementById('workout-form');
-const plankInput = document.getElementById('plank-time');
-const crunchInput = document.getElementById('crunches');
+const plankSetsInput = document.getElementById('plank-sets');
+const plankTimeInput = document.getElementById('plank-time');
+const crunchSetsInput = document.getElementById('crunch-sets');
+const crunchRepsInput = document.getElementById('crunch-reps');
 const chartDiv = document.getElementById('chart');
 
 // 初始化数据
@@ -11,16 +13,24 @@ let data = JSON.parse(localStorage.getItem('workoutData')) || [];
 form.addEventListener('submit', (e) => {
     e.preventDefault();
     const today = new Date().toISOString().split('T')[0];
-    const plankTime = parseInt(plankInput.value);
-    const crunches = parseInt(crunchInput.value);
+    const plankSets = parseInt(plankSetsInput.value);
+    const plankTime = parseInt(plankTimeInput.value);
+    const crunchSets = parseInt(crunchSetsInput.value);
+    const crunchReps = parseInt(crunchRepsInput.value);
+
+    // 计算总平板时间和总卷腹次数
+    const totalPlankTime = plankSets * plankTime;
+    const totalCrunches = crunchSets * crunchReps;
 
     // 检查当天是否已有记录
     const existing = data.find(d => d.date === today);
     if (existing) {
-        existing.plankTime = plankTime;
-        existing.crunches = crunches;
+        existing.plankSets += plankSets;
+        existing.plankTime += totalPlankTime;
+        existing.crunchSets += crunchSets;
+        existing.crunchReps += totalCrunches;
     } else {
-        data.push({ date: today, plankTime, crunches });
+        data.push({ date: today, plankSets, plankTime: totalPlankTime, crunchSets, crunchReps: totalCrunches });
     }
 
     // 保存到LocalStorage
@@ -38,8 +48,13 @@ function updateChart() {
     // 清空之前的图表
     chartDiv.innerHTML = '';
 
+    if (data.length === 0) {
+        chartDiv.innerHTML = '<p>暂无训练数据，开始记录你的进步吧！</p>';
+        return;
+    }
+
     // 设置图表尺寸
-    const margin = { top: 20, right: 30, bottom: 30, left: 40 },
+    const margin = { top: 40, right: 30, bottom: 50, left: 60 },
           width = 800 - margin.left - margin.right,
           height = 400 - margin.top - margin.bottom;
 
@@ -50,23 +65,25 @@ function updateChart() {
                   .append("g")
                   .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // 设置x和y轴
+    // 设置x轴
     const x = d3.scaleBand()
                 .domain(data.map(d => d.date))
                 .range([0, width])
-                .padding(0.1);
+                .padding(0.2);
 
-    const y = d3.scaleLinear()
-                .domain([0, d3.max(data, d => Math.max(d.plankTime, d.crunches)) + 10])
-                .nice()
-                .range([height, 0]);
-
-    // 添加x轴
     svg.append("g")
        .attr("transform", `translate(0,${height})`)
-       .call(d3.axisBottom(x).tickValues(x.domain().filter((d, i) => !(i % Math.ceil(data.length / 10)))));
+       .call(d3.axisBottom(x).tickValues(x.domain().filter((d, i) => !(i % Math.ceil(data.length / 10)))))
+       .selectAll("text")
+       .attr("transform", "rotate(-45)")
+       .style("text-anchor", "end");
 
-    // 添加y轴
+    // 设置y轴
+    const yMax = d3.max(data, d => Math.max(d.plankTime, d.crunchReps)) + 20;
+    const y = d3.scaleLinear()
+                .domain([0, yMax])
+                .range([height, 0]);
+
     svg.append("g")
        .call(d3.axisLeft(y));
 
@@ -89,17 +106,37 @@ function updateChart() {
        .append("rect")
        .attr("class", "bar-crunch")
        .attr("x", d => x(d.date) + x.bandwidth() / 2)
-       .attr("y", d => y(d.crunches))
+       .attr("y", d => y(d.crunchReps))
        .attr("width", x.bandwidth() / 2)
-       .attr("height", d => height - y(d.crunches))
+       .attr("height", d => height - y(d.crunchReps))
        .attr("fill", "orange");
 
     // 添加图例
-    svg.append("circle").attr("cx", width - 100).attr("cy", 10).attr("r", 6).style("fill", "steelblue");
-    svg.append("text").attr("x", width - 90).attr("y", 10).text("平板支撑时间").style("font-size", "12px").attr("alignment-baseline","middle");
+    const legendData = [
+        { name: "平板支撑时间（秒）", color: "steelblue" },
+        { name: "卷腹次数", color: "orange" }
+    ];
 
-    svg.append("circle").attr("cx", width - 100).attr("cy", 30).attr("r", 6).style("fill", "orange");
-    svg.append("text").attr("x", width - 90).attr("y", 30).text("卷腹次数").style("font-size", "12px").attr("alignment-baseline","middle");
+    const legend = svg.selectAll(".legend")
+                      .data(legendData)
+                      .enter()
+                      .append("g")
+                      .attr("class", "legend")
+                      .attr("transform", (d, i) => `translate(0,${i * 20})`);
+
+    legend.append("rect")
+          .attr("x", width - 200)
+          .attr("width", 18)
+          .attr("height", 18)
+          .style("fill", d => d.color);
+
+    legend.append("text")
+          .attr("x", width - 180)
+          .attr("y", 9)
+          .attr("dy", ".35em")
+          .text(d => d.name)
+          .style("font-size", "12px")
+          .attr("alignment-baseline","middle");
 }
 
 // 初始绘图

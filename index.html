@@ -10,15 +10,29 @@
 <body>
     <h1>我的腹肌训练记录</h1>
     <form id="workout-form">
-        <label>
-            平板支撑时间（秒）:
-            <input type="number" id="plank-time" required>
-        </label>
-        <label>
-            卷腹次数:
-            <input type="number" id="crunches" required>
-        </label>
-        <button type="submit">记录</button>
+        <div class="form-section">
+            <h2>平板支撑</h2>
+            <label>
+                组数:
+                <input type="number" id="plank-sets" min="1" value="1" required>
+            </label>
+            <label>
+                每组时间（秒）:
+                <input type="number" id="plank-time" min="10" value="60" required>
+            </label>
+        </div>
+        <div class="form-section">
+            <h2>卷腹</h2>
+            <label>
+                组数:
+                <input type="number" id="crunch-sets" min="1" value="1" required>
+            </label>
+            <label>
+                每组次数:
+                <input type="number" id="crunch-reps" min="5" value="10" required>
+            </label>
+        </div>
+        <button type="submit">记录训练</button>
     </form>
     <div id="chart"></div>
 
