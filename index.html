@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>腹肌训练记录</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- 引入D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <h1>我的腹肌训练记录</h1>
+    <form id="workout-form">
+        <label>
+            平板支撑时间（秒）:
+            <input type="number" id="plank-time" required>
+        </label>
+        <label>
+            卷腹次数:
+            <input type="number" id="crunches" required>
+        </label>
+        <button type="submit">记录</button>
+    </form>
+    <div id="chart"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
